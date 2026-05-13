@@ -1,0 +1,16 @@
+[package]
+name = "typeless-audio"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+cpal = "0.15"
+webrtc-vad = "0.4"
+tokio = { workspace = true }
+anyhow = { workspace = true }
+thiserror = { workspace = true }
+tracing = { workspace = true }
+parking_lot = { workspace = true }
+async-trait = { workspace = true }
+hound = "3.5"

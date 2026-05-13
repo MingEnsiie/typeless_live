@@ -1,0 +1,47 @@
+[workspace]
+resolver = "2"
+members = [
+    "crates/typeless-core",
+    "crates/typeless-audio",
+    "crates/typeless-asr",
+    "crates/typeless-llm",
+    "crates/typeless-inject",
+    "crates/typeless-storage",
+    "crates/typeless-hotkey",
+    "crates/typeless-context",
+    "crates/typeless-cli",
+]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+authors = ["Ming <zhangming@vivo.com>"]
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/MingEnsiie/typeless_live"
+
+[workspace.dependencies]
+tokio = { version = "1.40", features = ["full"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+toml = "0.8"
+anyhow = "1"
+thiserror = "1"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter", "fmt"] }
+async-trait = "0.1"
+futures = "0.3"
+reqwest = { version = "0.12", default-features = false, features = ["json", "stream", "rustls-tls"] }
+bytes = "1"
+parking_lot = "0.12"
+directories = "5"
+once_cell = "1"
+chrono = { version = "0.4", features = ["serde"] }
+uuid = { version = "1", features = ["v4", "serde"] }
+rusqlite = { version = "0.31", features = ["bundled"] }
+keyring = "2"
+
+[profile.release]
+opt-level = 3
+lto = "thin"
+codegen-units = 1
+strip = true

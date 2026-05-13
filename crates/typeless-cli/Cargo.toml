@@ -1,0 +1,33 @@
+[package]
+name = "typeless-cli"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[[bin]]
+name = "typeless-cli"
+path = "src/main.rs"
+
+[features]
+default = []
+whisper = ["typeless-asr/whisper"]
+
+[dependencies]
+anyhow = { workspace = true }
+tokio = { workspace = true }
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+chrono = { workspace = true }
+clap = { version = "4", features = ["derive"] }
+toml = { workspace = true }
+
+typeless-core = { path = "../typeless-core" }
+typeless-storage = { path = "../typeless-storage" }
+typeless-audio = { path = "../typeless-audio" }
+typeless-asr = { path = "../typeless-asr" }
+typeless-llm = { path = "../typeless-llm" }
+typeless-inject = { path = "../typeless-inject" }
+typeless-hotkey = { path = "../typeless-hotkey" }
+typeless-context = { path = "../typeless-context" }

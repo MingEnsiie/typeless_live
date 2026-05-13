@@ -1,0 +1,19 @@
+[package]
+name = "typeless-asr"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[features]
+default = []
+whisper = ["dep:whisper-rs"]
+
+[dependencies]
+async-trait = { workspace = true }
+anyhow = { workspace = true }
+thiserror = { workspace = true }
+tracing = { workspace = true }
+tokio = { workspace = true }
+serde = { workspace = true }
+reqwest = { workspace = true }
+whisper-rs = { version = "0.13", optional = true }

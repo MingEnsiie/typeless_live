@@ -1,0 +1,16 @@
+/target
+**/*.rs.bk
+Cargo.lock.bak
+.DS_Store
+node_modules
+dist
+dist-ssr
+.vite
+.env
+.env.local
+*.log
+/apps/desktop/src-tauri/target
+/models
+.idea
+.vscode
+*.iml

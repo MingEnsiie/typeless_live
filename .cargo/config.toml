@@ -1,0 +1,7 @@
+[target.x86_64-unknown-linux-gnu]
+rustflags = [
+  "-L", "/home/mingzh/.local/sysroot/usr/lib/x86_64-linux-gnu",
+]
+
+[env]
+PKG_CONFIG_PATH = "/home/mingzh/.local/sysroot/usr/lib/x86_64-linux-gnu/pkgconfig"
