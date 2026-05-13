@@ -22,6 +22,9 @@ serde_json = { workspace = true }
 chrono = { workspace = true }
 clap = { version = "4", features = ["derive"] }
 toml = { workspace = true }
+reqwest = { workspace = true }
+futures = { workspace = true }
+tracing-appender = "0.2"
 
 typeless-core = { path = "../typeless-core" }
 typeless-storage = { path = "../typeless-storage" }

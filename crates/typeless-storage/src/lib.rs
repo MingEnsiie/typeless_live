@@ -1,6 +1,7 @@
 //! typeless-storage: 配置 / SQLite / keyring 统一封装。
 pub mod config;
 pub mod db;
+pub mod models;
 pub mod paths;
 pub mod secrets;
 

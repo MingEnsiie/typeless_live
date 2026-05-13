@@ -2,6 +2,7 @@
 use async_trait::async_trait;
 
 pub mod mock;
+pub mod streaming;
 #[cfg(feature = "whisper")]
 pub mod whisper;
 

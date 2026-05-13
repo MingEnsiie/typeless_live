@@ -46,4 +46,7 @@ pub trait LlmProvider: Send + Sync {
 }
 
 pub use pipeline::{PostProcessor, PromptMode};
-pub use providers::{deepseek::DeepSeek, mimo::MiMo, mock::MockLlm, openai_compat::OpenAiCompat};
+pub use providers::{
+    deepseek::DeepSeek, local_http::LocalHttp, mimo::MiMo, mock::MockLlm,
+    openai_compat::OpenAiCompat,
+};
