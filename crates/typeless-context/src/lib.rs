@@ -12,7 +12,9 @@ impl AppContext {
     pub fn detect() -> Self {
         #[cfg(target_os = "linux")]
         return linux::detect();
-        #[cfg(not(target_os = "linux"))]
+        #[cfg(target_os = "windows")]
+        return windows::detect();
+        #[cfg(not(any(target_os = "linux", target_os = "windows")))]
         return Self::default();
     }
 
@@ -73,6 +75,7 @@ mod linux {
         AppContext { display_server, ..Default::default() }
     }
 
+    #[allow(dead_code)]
     fn json_get(s: &str, key: &str) -> Option<String> {
         // 最简 JSON 字段提取（仅供 hyprctl 输出，不依赖 serde_json）
         let pat = format!("\"{key}\":");
@@ -83,5 +86,35 @@ mod linux {
         let rest = &rest[1..];
         let end = rest.find('"')?;
         Some(rest[..end].to_string())
+    }
+}
+
+#[cfg(target_os = "windows")]
+mod windows {
+    use super::AppContext;
+    use std::process::Command;
+
+    pub fn detect() -> AppContext {
+        // PowerShell: get foreground window title + process name
+        let ps = r#"
+$h = (Add-Type -MemberDefinition '[DllImport("user32.dll")]public static extern IntPtr GetForegroundWindow();' -Name U -Namespace W -PassThru)::GetForegroundWindow()
+$pid2 = 0
+Add-Type -MemberDefinition '[DllImport("user32.dll")]public static extern int GetWindowThreadProcessId(IntPtr hWnd, out int lpdwProcessId);' -Name U2 -Namespace W2 -PassThru | Out-Null
+[W2.U2]::GetWindowThreadProcessId($h, [ref]$pid2) | Out-Null
+$p = Get-Process -Id $pid2 -ErrorAction SilentlyContinue
+Write-Output ($p.ProcessName + "|" + $p.MainWindowTitle)
+"#;
+        if let Ok(out) = Command::new("powershell")
+            .args(["-NoProfile", "-NonInteractive", "-Command", ps])
+            .output()
+        {
+            let s = String::from_utf8_lossy(&out.stdout);
+            let s = s.trim();
+            let mut parts = s.splitn(2, '|');
+            let app = parts.next().map(|x| x.trim().to_string()).filter(|x| !x.is_empty());
+            let title = parts.next().map(|x| x.trim().to_string()).filter(|x| !x.is_empty());
+            return AppContext { app, window_title: title, display_server: Some("windows".into()) };
+        }
+        AppContext { display_server: Some("windows".into()), ..Default::default() }
     }
 }

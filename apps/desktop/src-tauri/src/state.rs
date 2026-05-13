@@ -23,7 +23,8 @@ pub fn build_provider(settings: &Settings, force_mock: bool) -> Arc<dyn LlmProvi
     }
     match settings.llm.provider.as_str() {
         "deepseek" => Arc::new(typeless_llm::DeepSeek::new(key, settings.llm.base_url.clone())),
-        "mimo" => Arc::new(typeless_llm::MiMo::new(key, settings.llm.base_url.clone())),
+        "mimo"     => Arc::new(typeless_llm::MiMo::new(key, settings.llm.base_url.clone())),
+        "local"    => Arc::new(typeless_llm::LocalHttp::new(settings.llm.base_url.clone())),
         "openai" => {
             let base = settings.llm.base_url.clone()
                 .unwrap_or_else(|| "https://api.openai.com/v1".into());

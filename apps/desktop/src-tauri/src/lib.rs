@@ -105,6 +105,8 @@ pub fn run() {
             commands::dict_remove,
             commands::list_models,
             commands::download_model,
+            commands::ping_llm,
+            commands::get_providers,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

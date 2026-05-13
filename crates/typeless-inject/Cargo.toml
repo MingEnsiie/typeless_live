@@ -12,5 +12,6 @@ async-trait = { workspace = true }
 tokio = { workspace = true }
 arboard = "3.4"
 
-[target.'cfg(target_os = "linux")'.dependencies]
+# enigo 支持 Linux / Windows / macOS（不含 Android/iOS）
+[target.'cfg(any(target_os = "linux", target_os = "windows", target_os = "macos"))'.dependencies]
 enigo = "0.2"

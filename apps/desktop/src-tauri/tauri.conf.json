@@ -14,11 +14,12 @@
     "windows": [
       {
         "label": "main",
-        "title": "Typeless",
-        "width": 1024,
-        "height": 720,
-        "minWidth": 800,
-        "minHeight": 500
+        "title": "Typeless · AI 语音输入法",
+        "width": 1100,
+        "height": 740,
+        "minWidth": 860,
+        "minHeight": 540,
+        "center": true
       },
       {
         "label": "floating",
@@ -37,11 +38,35 @@
         "resizable": false
       }
     ],
-    "security": { "csp": null }
+    "security": { "csp": null },
+    "trayIcon": {
+      "iconPath": "icons/icon.png",
+      "iconAsTemplate": true,
+      "menuOnLeftClick": false,
+      "title": "Typeless"
+    }
   },
   "bundle": {
     "active": true,
     "targets": "all",
-    "icon": ["icons/icon.png"]
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ],
+    "windows": {
+      "digestAlgorithm": "sha256",
+      "certificateThumbprint": null,
+      "timestampUrl": "",
+      "wix": {},
+      "nsis": {
+        "languages": ["SimpChinese", "English"],
+        "displayLanguageSelector": false,
+        "installMode": "perMachine"
+      }
+    },
+    "resources": []
   }
 }

@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<title>Typeless · AI 语音输入法</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#0d0d0f;color:#e8e8ed;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  display:flex;flex-direction:column;align-items:center;padding:40px 20px;min-height:100vh}
+h1{font-size:1.5rem;font-weight:700;letter-spacing:.06em;color:#fff;margin-bottom:4px}
+.sub{font-size:.8rem;color:#555;margin-bottom:44px;letter-spacing:.1em;text-transform:uppercase}
+.mic-wrap{margin-bottom:28px}
+.mic-btn{width:128px;height:128px;border-radius:50%;border:none;cursor:pointer;
+  background:#1c1c1e;display:flex;align-items:center;justify-content:center;
+  transition:background .2s,transform .1s;box-shadow:0 4px 32px rgba(0,0,0,.5)}
+.mic-btn:hover{background:#2a2a2c;transform:scale(1.04)}
+.mic-btn:active{transform:scale(.96)}
+.mic-btn.rec{background:#ff3b30;animation:pulse 1.4s infinite}
+.mic-icon{font-size:2.8rem;pointer-events:none;user-select:none}
+@keyframes pulse{
+  0%,100%{box-shadow:0 0 0 0 rgba(255,59,48,.55)}
+  55%{box-shadow:0 0 0 28px rgba(255,59,48,0)}
+}
+.status{font-size:.9rem;color:#666;margin-bottom:28px;height:22px;transition:color .25s}
+.status.rec{color:#ff3b30}.status.proc{color:#ffd60a}.status.ok{color:#30d158}
+.result{width:100%;max-width:620px;background:#1c1c1e;border-radius:16px;
+  padding:18px 20px;min-height:72px;margin-bottom:28px;
+  font-size:1.05rem;line-height:1.75;color:#e8e8ed;
+  border:1px solid #2c2c2e;white-space:pre-wrap;word-break:break-word}
+.result .ph{color:#444}
+.copy-btn{display:block;margin-top:10px;font-size:.75rem;color:#555;background:none;
+  border:1px solid #333;border-radius:6px;padding:3px 10px;cursor:pointer}
+.copy-btn:hover{color:#aaa;border-color:#555}
+.section{width:100%;max-width:620px;margin-bottom:8px}
+.section-title{font-size:.72rem;text-transform:uppercase;letter-spacing:.12em;
+  color:#444;margin-bottom:10px}
+.hist-item{background:#1c1c1e;border-radius:10px;padding:11px 15px;margin-bottom:7px;
+  border:1px solid #222;cursor:pointer;transition:background .15s}
+.hist-item:hover{background:#232325}
+.hist-time{font-size:.7rem;color:#444;margin-bottom:3px}
+.hist-text{font-size:.88rem;color:#bbb;overflow:hidden;
+  text-overflow:ellipsis;white-space:nowrap}
+.pill{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);
+  font-size:.72rem;color:#333;background:#161618;padding:5px 14px;
+  border-radius:20px;border:1px solid #222;pointer-events:none}
+</style>
+</head>
+<body>
+<h1>TYPELESS</h1>
+<p class="sub">AI 语音输入法</p>
+<div class="mic-wrap">
+  <button class="mic-btn" id="micBtn" onclick="toggle()">
+    <span class="mic-icon" id="micIcon">🎙</span>
+  </button>
+</div>
+<div class="status" id="status">待机</div>
+<div class="result" id="result">
+  <span class="ph">点击麦克风开始录音 · Ctrl+Alt+Space 快捷键</span>
+</div>
+<button class="copy-btn" id="copyBtn" onclick="copyResult()" style="display:none">复制文本</button>
+<div class="section">
+  <div class="section-title">最近记录</div>
+  <div id="history"></div>
+</div>
+<div class="pill" id="pill">Ctrl+Alt+Space</div>
+<script>
+const btn=document.getElementById('micBtn'),
+      icon=document.getElementById('micIcon'),
+      st=document.getElementById('status'),
+      res=document.getElementById('result'),
+      cp=document.getElementById('copyBtn'),
+      hist=document.getElementById('history');
+
+let lastText='';
+const stateMap={idle:'待机',recording:'录音中…',transcribing:'转写中…',
+  refining:'AI 润色中…',injecting:'注入中…',error:'出错'};
+const stateClass={idle:'',recording:'rec',transcribing:'proc',refining:'proc',
+  injecting:'proc',error:''};
+
+function setStatus(s){
+  st.textContent=stateMap[s]||s;
+  st.className='status '+(stateClass[s]||'');
+  btn.className='mic-btn'+(s==='recording'?' rec':'');
+  icon.textContent=s==='recording'?'⏹':'🎙';
+}
+
+function showText(text,isFinal){
+  if(!text)return;
+  res.textContent=text;
+  if(isFinal){
+    lastText=text;
+    cp.style.display='block';
+    addHistory(text);
+    setStatus('idle');
+  }
+}
+
+function addHistory(text){
+  const d=document.createElement('div');
+  d.className='hist-item';
+  d.onclick=()=>{navigator.clipboard&&navigator.clipboard.writeText(text)};
+  d.innerHTML=`<div class="hist-time">${new Date().toLocaleTimeString()}</div>`+
+    `<div class="hist-text">${text.replace(/</g,'&lt;')}</div>`;
+  hist.prepend(d);
+  if(hist.children.length>15)hist.lastChild.remove();
+}
+
+function copyResult(){
+  if(lastText)navigator.clipboard&&navigator.clipboard.writeText(lastText)
+    .then(()=>{cp.textContent='已复制 ✓';setTimeout(()=>cp.textContent='复制文本',1500)});
+}
+
+async function toggle(){await fetch('/api/toggle',{method:'POST'})}
+async function apiStart(){await fetch('/api/start',{method:'POST'})}
+async function apiStop(){await fetch('/api/stop',{method:'POST'})}
+
+document.addEventListener('keydown',e=>{
+  if(e.ctrlKey&&e.altKey&&e.code==='Space'){e.preventDefault();toggle()}
+});
+
+// SSE real-time events
+const es=new EventSource('/events');
+es.onmessage=e=>{
+  try{
+    const d=JSON.parse(e.data);
+    if(d.type==='status')setStatus(d.status);
+    if(d.type==='final_text')showText(d.text,true);
+    if(d.type==='partial_text'&&d.text)res.textContent=d.text;
+    if(d.type==='info')st.textContent=d.message;
+    if(d.type==='error')st.textContent='⚠ '+d.message;
+  }catch(_){}
+};
+es.onerror=()=>{st.textContent='连接断开，请刷新页面';st.className='status'};
+
+// load history on start
+fetch('/api/history').then(r=>r.json()).then(list=>{
+  list.slice(0,10).forEach(h=>{
+    const t=h.final_text||h.raw_text;if(!t)return;
+    const d=document.createElement('div');
+    d.className='hist-item';
+    d.onclick=()=>navigator.clipboard&&navigator.clipboard.writeText(t);
+    d.innerHTML=`<div class="hist-time">${h.created_at}</div>`+
+      `<div class="hist-text">${t.replace(/</g,'&lt;')}</div>`;
+    hist.appendChild(d);
+  });
+}).catch(()=>{});
+
+fetch('/api/status').then(r=>r.json()).then(d=>setStatus(d.status)).catch(()=>{});
+</script>
+</body>
+</html>

@@ -1,4 +1,5 @@
 mod ipc;
+mod web;
 
 use anyhow::Result;
 use clap::{Parser, Subcommand};
@@ -74,6 +75,15 @@ enum Cmd {
         #[arg(long)]
         mock: bool,
     },
+    /// 启动 Web UI（浏览器界面 + 守护进程）
+    Web {
+        /// 监听端口
+        #[arg(long, default_value_t = 7421)]
+        port: u16,
+        /// 强制使用 mock provider（无需 API key）
+        #[arg(long)]
+        mock: bool,
+    },
 }
 
 #[derive(Subcommand, Debug)]
@@ -124,6 +134,7 @@ async fn main() -> Result<()> {
         Cmd::Onboarding => handle_onboarding(paths).await,
         Cmd::Stream { secs, mock } => handle_stream(paths, secs, mock).await,
         Cmd::PingLlm { mock } => handle_ping_llm(paths, mock).await,
+        Cmd::Web { port, mock } => handle_web(paths, port, mock).await,
     }
 }
 
@@ -277,7 +288,13 @@ async fn run_daemon(paths: AppPaths, mock: bool, once: Option<u64>, ipc: bool) -
     // 守护进程模式 + 全局热键
     let combo = settings.hotkey.trigger.clone();
     println!("🎙  Typeless 已启动。按下 {combo} 开始/结束录音。Ctrl+C 退出。");
-    match typeless_hotkey::Hotkey::register(&combo) {
+    let has_display = std::env::var("WAYLAND_DISPLAY").is_ok() || std::env::var("DISPLAY").is_ok();
+    let hk_result = if has_display {
+        typeless_hotkey::Hotkey::register(&combo)
+    } else {
+        Err(anyhow::anyhow!("无显示服务器（XDG_SESSION_TYPE=tty/headless），跳过全局热键注册"))
+    };
+    match hk_result {
         Ok((_hk, rx_hk)) => {
             let engine2 = engine.clone();
             std::thread::spawn(move || {
@@ -598,4 +615,52 @@ async fn selftest(paths: AppPaths) -> Result<()> {
     let _ = injector;
     println!("✅ Selftest passed.");
     Ok(())
+}
+
+async fn handle_web(paths: AppPaths, port: u16, mock: bool) -> Result<()> {
+    let settings = Settings::load_or_create(&paths.config_file)?;
+    let db = Arc::new(Db::open(&paths.db_file)?);
+    let provider = build_provider(&settings, mock);
+    let asr = build_asr(&settings, &paths);
+    let post = build_post(&settings, provider, Some(&db));
+    let injector: Arc<dyn typeless_inject::TextInjector> =
+        Arc::from(typeless_inject::default_injector());
+
+    let cfg = EngineConfig {
+        mode: typeless_audio::CaptureMode::Toggle,
+        language: if settings.asr.language == "auto" { None }
+                  else { Some(settings.asr.language.clone()) },
+        translate: settings.asr.translate,
+        save_history: !settings.privacy.no_history,
+        auto_inject: false, // Web 模式不自动注入，在浏览器里复制
+    };
+    let engine = Arc::new(Engine::new(asr, post, injector, Some(db.clone()), cfg));
+
+    // 日志订阅
+    let mut rx = engine.subscribe();
+    tokio::spawn(async move {
+        while let Ok(ev) = rx.recv().await {
+            tracing::debug!("engine event: {:?}", ev);
+        }
+    });
+
+    // 热键（可选）
+    let has_display = std::env::var("WAYLAND_DISPLAY").is_ok()
+        || std::env::var("DISPLAY").is_ok();
+    if has_display {
+        if let Ok((_hk, rx_hk)) = typeless_hotkey::Hotkey::register(&settings.hotkey.trigger) {
+            let e2 = engine.clone();
+            std::thread::spawn(move || {
+                while let Ok(typeless_hotkey::HotkeyEvent::Press) = rx_hk.recv() {
+                    let e = e2.clone();
+                    tokio::runtime::Handle::current().spawn(async move {
+                        if e.is_recording() { let _ = e.stop_and_process().await; }
+                        else { let _ = e.start_recording(); }
+                    });
+                }
+            });
+        }
+    }
+
+    web::serve(engine, db, port).await
 }
