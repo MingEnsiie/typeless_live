@@ -1,0 +1,32 @@
+app-id: io.github.mingensiie.Typeless
+runtime: org.freedesktop.Platform
+runtime-version: '23.08'
+sdk: org.freedesktop.Sdk
+sdk-extensions:
+  - org.freedesktop.Sdk.Extension.rust-stable
+command: typeless-cli
+finish-args:
+  - --share=ipc
+  - --share=network
+  - --device=all              # 麦克风访问
+  - --socket=pulseaudio
+  - --socket=wayland
+  - --socket=fallback-x11
+  - --talk-name=org.freedesktop.secrets   # keyring
+  - --filesystem=xdg-config/typeless:create
+  - --filesystem=xdg-data/typeless:create
+build-options:
+  append-path: /usr/lib/sdk/rust-stable/bin
+  build-args:
+    - --share=network
+modules:
+  - name: typeless
+    buildsystem: simple
+    build-commands:
+      - cargo build --release --offline --bin typeless-cli
+      - install -Dm755 target/release/typeless-cli /app/bin/typeless-cli
+      - install -Dm644 packaging/flatpak/io.github.mingensiie.Typeless.desktop
+        /app/share/applications/io.github.mingensiie.Typeless.desktop
+    sources:
+      - type: dir
+        path: ../..

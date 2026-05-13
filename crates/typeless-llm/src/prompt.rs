@@ -31,3 +31,45 @@ pub fn system_for(mode: &str) -> &'static str {
         _ => SYS_DEFAULT,
     }
 }
+
+// ===== P2 #29: 多语种 system prompt =====
+
+pub const SYS_DEFAULT_EN: &str = "You are a post-processor for a voice input method. Tasks: \
+(1) remove filler words (um, uh, like, you know, so); \
+(2) add proper punctuation and capitalization; \
+(3) fix homophone / transcription errors; \
+(4) keep the original meaning, do not expand or summarize; \
+(5) output the cleaned text only, with no quotes, prefix or explanation.";
+
+pub const SYS_DEFAULT_JA: &str = "あなたは音声入力法の後処理器です。タスク：\
+(1) フィラー語（えーと、あのー、まあ等）を除去する；\
+(2) 適切な句読点を追加する；\
+(3) 同音異義語の誤りを修正する；\
+(4) 元の意図を保持し、拡張や要約はしない；\
+(5) 最終テキストのみを出力し、引用符や接頭辞、説明は付けない。";
+
+pub const SYS_DEFAULT_KO: &str = "당신은 음성 입력기의 후처리기입니다. 작업: \
+(1) 군더더기 표현(어, 음, 그, 저 등)을 제거; \
+(2) 적절한 문장 부호 추가; \
+(3) 동음이의어 오류 수정; \
+(4) 원래 의도 유지, 확장하거나 요약하지 않음; \
+(5) 최종 텍스트만 출력, 인용 부호나 설명 없이.";
+
+/// 根据语言代码（zh/en/ja/ko/auto）选择默认 system prompt。
+pub fn system_for_lang(lang: &str) -> &'static str {
+    match lang {
+        "en" | "english" => SYS_DEFAULT_EN,
+        "ja" | "japanese" | "jp" => SYS_DEFAULT_JA,
+        "ko" | "korean" | "kr" => SYS_DEFAULT_KO,
+        _ => SYS_DEFAULT,
+    }
+}
+
+/// 综合：根据 mode 与 lang 选择最合适的 system prompt。
+/// mode 优先级最高（email/code/formal/translate_en）；否则按语言。
+pub fn system_for_lang_mode(lang: &str, mode: &str) -> &'static str {
+    match mode {
+        "default" | "" => system_for_lang(lang),
+        other => system_for(other),
+    }
+}

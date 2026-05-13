@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<component>
+  <name>org.freedesktop.IBus.Typeless</name>
+  <description>Typeless voice input method</description>
+  <exec>/usr/bin/python3 ~/.local/share/ibus/component/typeless-engine.py --ibus</exec>
+  <version>0.1.0</version>
+  <author>Typeless Contributors</author>
+  <license>MIT</license>
+  <homepage>https://github.com/MingEnsiie/typeless_live</homepage>
+  <textdomain>typeless</textdomain>
+  <engines>
+    <engine>
+      <name>typeless</name>
+      <language>zh</language>
+      <license>MIT</license>
+      <author>Typeless Contributors</author>
+      <layout>default</layout>
+      <longname>Typeless Voice</longname>
+      <description>AI voice input method</description>
+      <icon>audio-input-microphone</icon>
+      <rank>0</rank>
+    </engine>
+  </engines>
+</component>

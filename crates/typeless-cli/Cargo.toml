@@ -3,6 +3,22 @@ name = "typeless-cli"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
+description = "Typeless - AI 语音输入法守护进程 (CLI)"
+repository = "https://github.com/MingEnsiie/typeless_live"
+
+[package.metadata.deb]
+maintainer = "Typeless Contributors"
+copyright = "2025, Typeless Contributors"
+extended-description = "Wispr Flow 风格的 AI 语音输入法。本地 Whisper + 云端 / 本地 LLM 后处理，支持热键唤起、SQLite 历史、词典、隐私模式。"
+depends = "$auto, libasound2, libxdo3, libxcb1, libxkbcommon0"
+section = "utility"
+priority = "optional"
+assets = [
+    ["target/release/typeless-cli", "usr/bin/", "755"],
+    ["../../README.md", "usr/share/doc/typeless/README.md", "644"],
+    ["../../packaging/systemd/typeless.service", "usr/lib/systemd/user/typeless.service", "644"],
+    ["../../scripts/download-models.sh", "usr/share/typeless/download-models.sh", "755"],
+]
 
 [[bin]]
 name = "typeless-cli"

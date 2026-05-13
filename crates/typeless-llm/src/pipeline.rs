@@ -38,6 +38,8 @@ pub struct PostProcessor {
     pub dictionary: Vec<(String, String)>,
     /// 当前应用上下文（用于注入 prompt）
     pub app_context: Option<String>,
+    /// 用户语言（zh/en/ja/ko/auto），用于选择默认 system prompt
+    pub language: String,
 }
 
 impl PostProcessor {
@@ -47,6 +49,7 @@ impl PostProcessor {
             mode: PromptMode::Default,
             dictionary: Vec::new(),
             app_context: None,
+            language: "zh".into(),
         }
     }
 
@@ -61,7 +64,7 @@ impl PostProcessor {
 
     fn build_messages(&self, raw: &str) -> Vec<Message> {
         let pre = self.apply_dict(raw.to_string());
-        let mut sys = String::from(prompt::system_for(self.mode.as_str()));
+        let mut sys = String::from(prompt::system_for_lang_mode(&self.language, self.mode.as_str()));
         if !self.dictionary.is_empty() {
             sys.push_str("\n\n参考术语映射（已预处理但请保持一致）：\n");
             for (f, t) in &self.dictionary {

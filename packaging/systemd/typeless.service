@@ -1,0 +1,19 @@
+[Unit]
+Description=Typeless voice input daemon
+Documentation=https://github.com/MingEnsiie/typeless_live
+After=graphical-session.target sound.target
+PartOf=graphical-session.target
+
+[Service]
+Type=simple
+ExecStart=%h/.local/bin/typeless-cli run
+Restart=on-failure
+RestartSec=3
+# 日志由 typeless-cli 自身写入 ~/.local/share/typeless/logs/
+StandardOutput=journal
+StandardError=journal
+# 资源限制（可选）
+MemoryMax=2G
+
+[Install]
+WantedBy=graphical-session.target default.target

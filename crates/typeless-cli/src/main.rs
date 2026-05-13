@@ -1,3 +1,5 @@
+mod ipc;
+
 use anyhow::Result;
 use clap::{Parser, Subcommand};
 use std::sync::Arc;
@@ -23,6 +25,9 @@ enum Cmd {
         /// 单次模式：录制 N 秒后处理并退出（用于测试/headless）
         #[arg(long)]
         once: Option<u64>,
+        /// 启动 Unix-socket IPC 服务器（供 fcitx5/ibus 集成）
+        #[arg(long)]
+        ipc: bool,
     },
     /// 配置管理
     Config {
@@ -109,7 +114,7 @@ async fn main() -> Result<()> {
     let _guard = init_logging(&paths);
 
     match cli.cmd {
-        Cmd::Run { mock, once } => run_daemon(paths, mock, once).await,
+        Cmd::Run { mock, once, ipc } => run_daemon(paths, mock, once, ipc).await,
         Cmd::Config { action } => handle_config(paths, action),
         Cmd::History { limit } => handle_history(paths, limit),
         Cmd::Dict { action } => handle_dict(paths, action),
@@ -212,6 +217,7 @@ fn build_post(settings: &Settings, provider: Arc<dyn LlmProvider>, db: Option<&D
     opts.max_tokens = settings.llm.max_tokens;
     let mut p = PostProcessor::new(provider, opts);
     p.mode = PromptMode::parse(&settings.prompt_mode);
+    p.language = settings.asr.language.clone();
     if let Some(db) = db {
         if let Ok(list) = db.dict_list() {
             p.dictionary = list.into_iter().map(|e| (e.from_text, e.to_text)).collect();
@@ -222,7 +228,7 @@ fn build_post(settings: &Settings, provider: Arc<dyn LlmProvider>, db: Option<&D
     Arc::new(p)
 }
 
-async fn run_daemon(paths: AppPaths, mock: bool, once: Option<u64>) -> Result<()> {
+async fn run_daemon(paths: AppPaths, mock: bool, once: Option<u64>, ipc: bool) -> Result<()> {
     let settings = Settings::load_or_create(&paths.config_file)?;
     let db = Arc::new(Db::open(&paths.db_file)?);
     let provider = build_provider(&settings, mock);
@@ -246,6 +252,17 @@ async fn run_daemon(paths: AppPaths, mock: bool, once: Option<u64>) -> Result<()
             println!("[event] {}", serde_json::to_string(&ev).unwrap_or_default());
         }
     });
+
+    // P2 #24/#25: 可选 IPC 服务器（供 fcitx5/ibus addon 接入）
+    if ipc {
+        let engine_ipc = engine.clone();
+        tokio::spawn(async move {
+            if let Err(e) = ipc::serve(engine_ipc).await {
+                eprintln!("⚠ IPC 服务器停止: {e}");
+            }
+        });
+        println!("🔌 IPC socket: {}", ipc::socket_path().display());
+    }
 
     if let Some(secs) = once {
         // headless 单次模式

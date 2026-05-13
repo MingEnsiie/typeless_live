@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=Typeless
+GenericName=Voice Input Method
+Comment=AI 语音输入法 - Wispr Flow 风格
+Exec=typeless-cli run
+Icon=io.github.mingensiie.Typeless
+Terminal=false
+Categories=Utility;AudioVideo;Accessibility;
+Keywords=voice;speech;input;dictation;asr;
+StartupNotify=false
